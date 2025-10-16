@@ -1,0 +1,244 @@
+  <script src="sistema/favicon.ico"></script>
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DMREDE</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DQGCR653QQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-DQGCR653QQ');
+</script>
+
+ <script src="ID.js"></script>
+</body>
+</html>
+
+<script src="https://lucasok3555.github.io/Lucasweb/cookie.js"></script>
+</body>
+</html>
+
+ <script src="/sistema/cdn.js"></script>
+</body>
+</html>
+
+<script>
+  if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = "/m%c3%b3vel/";
+  }
+</script>
+
+<p style="text-align: left;"><a href="/servi%C3%A7os/">Servi&ccedil;o</a> <a href="sites">sites</a>&nbsp;<a href="login">login</a></p>
+
+<p style="text-align: center;">Bem-vindo a nossa rede&nbsp;</p>
+<p>&nbsp;</p>
+<p>Vamos mostrar voc&ecirc;s tudo que a gente tem 😉<br />Aqui voc&ecirc; tem muito mais servi&ccedil;os 🛠️<br />Temos v&aacute;rios servi&ccedil;os online <br />Servi&ccedil;o de v&iacute;deos <br />Servi&ccedil;o de tradu&ccedil;&atilde;o <br />Servi&ccedil;o do IA<br />Servi&ccedil;o do amazamente nuvem <br />Servi&ccedil;o do jogos em nuvem <br />Servi&ccedil;o de pesquisa<br />Servi&ccedil;o de chat<br />Servi&ccedil;o do e-mail<br />Servi&ccedil;o do R&aacute;dio<br />Servi&ccedil;o do cilma<br />Servi&ccedil;o do f&oacute;rum<br />Voc&ecirc; n&atilde;o precisa baixar nada☁️<br />Tudo da nuvem voc&ecirc; n&atilde;o precisa baixar nada <br />Todos os nossos servi&ccedil;os est&atilde;o dentro do nosso site <br />Os nossos servi&ccedil;os os na nuvem s&atilde;o f&aacute;ceis de ser usada<br />O servi&ccedil;o &eacute; 100% na nuvem <br />O site &eacute; totalmente brasileiro 🇧🇷</p>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      color: #333;
+    }
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .item {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .item a {
+      font-weight: bold;
+      text-decoration: none;
+      color: #0077cc;
+    }
+    .item a:hover {
+      text-decoration: underline;
+    }
+    .desc {
+      margin-top: 8px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h2>📰 Últimas do RedeBlog</h2>
+  <div id="feed" class="feed">Carregando feed...</div>
+
+  <script>
+    async function carregarFeed() {
+      try {
+        const resposta = await fetch("/sites/redeblog.com/rss.xml");
+        const texto = await resposta.text();
+        const parser = new DOMParser();
+        const xml = parser.parseFromString(texto, "application/xml");
+
+        const itens = xml.querySelectorAll("item");
+        let html = "";
+
+        itens.forEach((item, i) => {
+          if (i < 10) { // Mostra apenas 10 posts
+            const titulo = item.querySelector("title")?.textContent || "Sem título";
+            const link = item.querySelector("link")?.textContent || "#";
+            const descricao = item.querySelector("description")?.textContent || "";
+            html += `
+              <div class="item">
+                <a href="${link}" target="_blank">${titulo}</a>
+                <div class="desc">${descricao}</div>
+              </div>
+            `;
+          }
+        });
+
+        document.getElementById("feed").innerHTML = html;
+      } catch (e) {
+        document.getElementById("feed").innerHTML = "❌ Erro ao carregar feed.";
+        console.error(e);
+      }
+    }
+
+    carregarFeed();
+  </script>
+</body>
+</html>
+
+  <script>
+    const nomeArquivo = "video.lxsv";
+    const partes = 10; // por exemplo, 10 pedaços
+    const servidor = "https://seuservidor.com/arquivos/";
+
+    async function baixarArquivo() {
+      for (let i = 0; i < partes; i++) {
+        const url = `${servidor}${nomeArquivo}.part${i}`;
+        const resposta = await fetch(url);
+        const blob = await resposta.blob();
+        await salvarNoIndexedDB(`parte${i}`, blob);
+      }
+      alert("Arquivo salvo em pedaços offline!");
+    }
+
+    function salvarNoIndexedDB(chave, blob) {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("OfflineArmazenamento", 1);
+        request.onupgradeneeded = function(event) {
+          const db = event.target.result;
+          db.createObjectStore("pedaços");
+        };
+        request.onsuccess = function(event) {
+          const db = event.target.result;
+          const transacao = db.transaction("pedaços", "readwrite");
+          const store = transacao.objectStore("pedaços");
+          const salvar = store.put(blob, chave);
+          salvar.onsuccess = () => resolve();
+          salvar.onerror = () => reject(salvar.error);
+        };
+      });
+    }
+  </script>
+</body>
+
+<p style="text-align: center;">DMREDE CC 2025 <a href="/regras/">regras</a></p>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title></title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Estilo do popup */
+    .cookie-popup {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background-color: #222;
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+      z-index: 9999;
+      display: none;
+    }
+
+    .cookie-popup.active {
+      display: block;
+    }
+
+    .cookie-popup button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .cookie-popup button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Conteúdo da página -->
+  <h1></h1>
+  <p></p>
+
+  <!-- Popup de cookies -->
+  <div class="cookie-popup" id="cookiePopup">
+    <p>Este site utiliza cookies para melhorar sua experiência. Ao continuar navegando, você concorda com nossa política de privacidade.</p>
+    <button onclick="aceitarCookies()">Aceitar</button>
+  </div>
+
+  <script>
+    // Mostra o popup se não houver registro de aceitação
+    window.onload = function() {
+      if (!localStorage.getItem('cookiesAceitos')) {
+        document.getElementById('cookiePopup').classList.add('active');
+      }
+    };
+
+    function aceitarCookies() {
+      document.getElementById('cookiePopup').classList.remove('active');
+      localStorage.setItem('cookiesAceitos', 'true'); // Salva a aceitação
+    }
+  </script>
+
+</body>
+</html>
