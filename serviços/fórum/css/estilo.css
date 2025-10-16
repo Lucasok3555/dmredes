@@ -1,0 +1,98 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+input[type="text"], input[type="password"], textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+.erro {
+    color: red;
+    font-weight: bold;
+}
+
+.poster-form {
+    margin: 20px 0;
+}
+
+.feed {
+    margin-top: 20px;
+}
+
+.poster {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.poster-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #555;
+}
+
+.username {
+    font-weight: bold;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.data {
+    color: #999;
+}
+
+.poster-texto {
+    white-space: pre-wrap;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.poster-actions {
+    font-size: 14px;
+}
+
+.poster-actions a {
+    margin-right: 15px;
+    color: #007bff;
+    text-decoration: none;
+}

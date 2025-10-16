@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora Científica</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f5f5f5;
+            margin: 0;
+        }
+        .calculator {
+            background-color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 320px;
+        }
+        .display {
+            background-color: #eee;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+            text-align: right;
+            font-size: 24px;
+            height: 40px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 10px;
+        }
+        button {
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #4d4d4d;
+            color: white;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #666;
+        }
+        .operator {
+            background-color: #ff9500;
+        }
+        .operator:hover {
+            background-color: #ffb143;
+        }
+        .equals {
+            background-color: #2196F3;
+        }
+        .equals:hover {
+            background-color: #42a5f5;
+        }
+        .clear {
+            background-color: #f44336;
+        }
+        .clear:hover {
+            background-color: #ef5350;
+        }
+        .function {
+            background-color: #9c27b0;
+        }
+        .function:hover {
+            background-color: #ab47bc;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <input type="text" class="display" id="display" disabled>
+        <div class="buttons">
+            <!-- Linha 1 -->
+            <button class="clear" onclick="clearDisplay()">C</button>
+            <button class="function" onclick="backspace()">⌫</button>
+            <button class="function" onclick="appendToDisplay('%')">%</button>
+            <button class="operator" onclick="appendToDisplay('/')">/</button>
+            <button class="function" onclick="appendToDisplay('**')">x^y</button>
+
+            <!-- Linha 2 -->
+            <button onclick="appendToDisplay('7')">7</button>
+            <button onclick="appendToDisplay('8')">8</button>
+            <button onclick="appendToDisplay('9')">9</button>
+            <button class="operator" onclick="appendToDisplay('*')">×</button>
+            <button class="function" onclick="calculateSquareRoot()">√</button>
+
+            <!-- Linha 3 -->
+            <button onclick="appendToDisplay('4')">4</button>
+            <button onclick="appendToDisplay('5')">5</button>
+            <button onclick="appendToDisplay('6')">6</button>
+            <button class="operator" onclick="appendToDisplay('-')">-</button>
+            <button class="function" onclick="calculateSquare()">x²</button>
+
+            <!-- Linha 4 -->
+            <button onclick="appendToDisplay('1')">1</button>
+            <button onclick="appendToDisplay('2')">2</button>
+            <button onclick="appendToDisplay('3')">3</button>
+            <button class="operator" onclick="appendToDisplay('+')">+</button>
+            <button class="function" onclick="calculateSin()">sin</button>
+
+            <!-- Linha 5 -->
+            <button onclick="appendToDisplay('0')">0</button>
+            <button onclick="appendToDisplay('.')">.</button>
+            <button class="equals" onclick="calculateResult()">=</button>
+            <button class="function" onclick="calculateCos()">cos</button>
+            <button class="function" onclick="calculateTan()">tan</button>
+
+            <!-- Linha 6 -->
+            <button class="function" onclick="calculateLog()">log</button>
+            <button class="function" onclick="calculateLn()">ln</button>
+            <button class="function" onclick="calculatePi()">π</button>
+            <button class="function" onclick="calculateE()">e</button>
+            <button class="function" onclick="calculateFactorial()">n!</button>
+        </div>
+    </div>
+
+    <script>
+        function appendToDisplay(value) {
+            document.getElementById('display').value += value;
+        }
+
+        function clearDisplay() {
+            document.getElementById('display').value = '';
+        }
+
+        function backspace() {
+            let display = document.getElementById('display');
+            display.value = display.value.slice(0, -1);
+        }
+
+        function calculateResult() {
+            let display = document.getElementById('display');
+            try {
+                // Substituir ^ por ** para exponenciação
+                let expression = display.value.replace(/\^/g, '**');
+                // Avaliar a expressão
+                let result = eval(expression);
+                // Verificar se o resultado é um número válido
+                if (isNaN(result) || !isFinite(result)) {
+                    display.value = 'Erro';
+                } else {
+                    display.value = result;
+                }
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateSquareRoot() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                if (value < 0) {
+                    display.value = 'Erro';
+                } else {
+                    display.value = Math.sqrt(value);
+                }
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateSquare() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                display.value = value * value;
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateSin() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                display.value = Math.sin(value);
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateCos() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                display.value = Math.cos(value);
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateTan() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                display.value = Math.tan(value);
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateLog() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                if (value <= 0) {
+                    display.value = 'Erro';
+                } else {
+                    display.value = Math.log10(value);
+                }
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculateLn() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                if (value <= 0) {
+                    display.value = 'Erro';
+                } else {
+                    display.value = Math.log(value);
+                }
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+
+        function calculatePi() {
+            let display = document.getElementById('display');
+            display.value += Math.PI;
+        }
+
+        function calculateE() {
+            let display = document.getElementById('display');
+            display.value += Math.E;
+        }
+
+        function calculateFactorial() {
+            let display = document.getElementById('display');
+            try {
+                let value = eval(display.value);
+                if (value < 0 || value % 1 !== 0) {
+                    display.value = 'Erro';
+                } else {
+                    let result = 1;
+                    for (let i = 2; i <= value; i++) {
+                        result *= i;
+                    }
+                    display.value = result;
+                }
+            } catch (error) {
+                display.value = 'Erro';
+            }
+        }
+    </script>
+</body>
+</html>
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-DQGCR653QQ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-DQGCR653QQ');
+</script>
