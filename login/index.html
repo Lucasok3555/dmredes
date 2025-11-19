@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>404</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+404
+  <script>
+    // Carrega o arquivo js.html e executa o conteúdo
+    fetch('/ID.html')
+      .then(res => res.text())
+      .then(codigo => {
+        // executa o que tá dentro de js.html
+        eval(codigo);
+      })
+      .catch(erro => console.error('Erro ao carregar o js.html:', erro));
+  </script>
+</body>
+</html>

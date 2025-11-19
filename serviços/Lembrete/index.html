@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lembrete</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            text-align: center;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .reminder-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .reminder-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .reminder-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Lembrete</h2>
+        <button id="add-btn">+ Adicionar Lembrete</button>
+        
+        <div id="reminder-form" style="display: none;">
+            <div class="input-group">
+                <label for="name">Nome:</label>
+                <input type="text" id="name" placeholder="Digite o nome do lembrete">
+            </div>
+            <div class="input-group">
+                <label for="time">Horário:</label>
+                <input type="time" id="time">
+            </div>
+            <div class="input-group">
+                <label for="date">Data:</label>
+                <input type="date" id="date">
+            </div>
+            <button id="save-btn">OK</button>
+        </div>
+        
+        <div class="reminder-list" id="reminder-list">
+            <!-- Lembretes serão adicionados aqui -->
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addBtn = document.getElementById('add-btn');
+            const reminderForm = document.getElementById('reminder-form');
+            const saveBtn = document.getElementById('save-btn');
+            const reminderList = document.getElementById('reminder-list');
+            
+            // Carregar lembretes salvos
+            loadReminders();
+            
+            addBtn.addEventListener('click', function() {
+                reminderForm.style.display = 'block';
+                addBtn.style.display = 'none';
+            });
+            
+            saveBtn.addEventListener('click', function() {
+                const name = document.getElementById('name').value;
+                const time = document.getElementById('time').value;
+                const date = document.getElementById('date').value;
+                
+                if (name && time && date) {
+                    const reminder = {
+                        id: Date.now(),
+                        name,
+                        time,
+                        date
+                    };
+                    
+                    saveReminder(reminder);
+                    addReminderToList(reminder);
+                    
+                    // Limpar formulário
+                    document.getElementById('name').value = '';
+                    document.getElementById('time').value = '';
+                    document.getElementById('date').value = '';
+                    
+                    reminderForm.style.display = 'none';
+                    addBtn.style.display = 'block';
+                    
+                    // Configurar notificação
+                    scheduleNotification(reminder);
+                } else {
+                    alert('Por favor, preencha todos os campos.');
+                }
+            });
+            
+            function addReminderToList(reminder) {
+                const item = document.createElement('div');
+                item.className = 'reminder-item';
+                item.innerHTML = `
+                    <strong>${reminder.name}</strong><br>
+                    Data: ${formatDate(reminder.date)} às ${reminder.time}
+                `;
+                reminderList.appendChild(item);
+            }
+            
+            function saveReminder(reminder) {
+                let reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+                reminders.push(reminder);
+                localStorage.setItem('reminders', JSON.stringify(reminders));
+            }
+            
+            function loadReminders() {
+                let reminders = JSON.parse(localStorage.getItem('reminders')) || [];
+                reminders.forEach(reminder => {
+                    addReminderToList(reminder);
+                    scheduleNotification(reminder);
+                });
+            }
+            
+            function scheduleNotification(reminder) {
+                const [year, month, day] = reminder.date.split('-');
+                const [hours, minutes] = reminder.time.split(':');
+                const reminderTime = new Date(year, month - 1, day, hours, minutes);
+                const now = new Date();
+                
+                // Se o tempo do lembrete for no futuro
+                if (reminderTime > now) {
+                    const timeDiff = reminderTime - now;
+                    
+                    setTimeout(() => {
+                        showNotification(reminder);
+                    }, timeDiff);
+                }
+            }
+            
+            function showNotification(reminder) {
+                // Verificar se temos permissão para mostrar notificações
+                if ('Notification' in window) {
+                    if (Notification.permission === 'granted') {
+                        new Notification(`Lembrete: ${reminder.name}`, {
+                            body: `Hoje às ${reminder.time}`,
+                            icon: 'https://cdn-icons-png.flaticon.com/512/2024/2024615.png'
+                        });
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                new Notification(`Lembrete: ${reminder.name}`, {
+                                    body: `Hoje às ${reminder.time}`,
+                                    icon: 'https://cdn-icons-png.flaticon.com/512/2024/2024615.png'
+                                });
+                            }
+                        });
+                    }
+                }
+                
+                // Também mostrar um alerta mesmo se as notificações estiverem desativadas
+                alert(`Lembrete: ${reminder.name}\nHora: ${reminder.time}`);
+            }
+            
+            function formatDate(dateString) {
+                const [year, month, day] = dateString.split('-');
+                return `${day}/${month}/${year}`;
+            }
+            
+            // Solicitar permissão para notificações
+            if ('Notification' in window) {
+                Notification.requestPermission();
+            }
+        });
+    </script>
+</body>
+</html>
+
+  <script>
+    // Carrega o arquivo js.html e executa o conteúdo
+    fetch('/ID.html')
+      .then(res => res.text())
+      .then(codigo => {
+        // executa o que tá dentro de js.html
+        eval(codigo);
+      })
+      .catch(erro => console.error('Erro ao carregar o js.html:', erro));
+  </script>
+</body>
+</html>

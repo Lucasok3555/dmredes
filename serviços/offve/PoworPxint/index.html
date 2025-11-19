@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .btn {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+
+        .btn-success {
+            background-color: #2ecc71;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+
+        .slide-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .slide-item {
+            padding: 10px;
+            background-color: #34495e;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .slide-item:hover {
+            background-color: #3d566e;
+        }
+
+        .slide-item.active {
+            background-color: #3498db;
+        }
+
+        .slide-item .slide-title {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .slide-item .slide-content-preview {
+            font-size: 12px;
+            color: #bdc3c7;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Main Area */
+        .main-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            position: relative;
+        }
+
+        .toolbar {
+            padding: 15px;
+            background-color: #ecf0f1;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            background-color: #f9f9f9;
+        }
+
+        .slide-canvas {
+            width: 900px;
+            height: 500px;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide-content {
+            padding: 30px;
+            height: 100%;
+            width: 100%;
+            outline: none;
+        }
+
+        .slide-content h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .slide-content p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #34495e;
+        }
+
+        .slide-content img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 15px;
+        }
+
+        .slide-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .slide-content th,
+        .slide-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .slide-content th {
+            background-color: #f2f2f2;
+        }
+
+        /* Presentation Mode */
+        .presentation-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .presentation-slide {
+            width: 90vw;
+            height: 90vh;
+            background-color: white;
+            overflow: hidden;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        .presentation-slide h1 {
+            font-size: 3rem;
+            margin-bottom: 25px;
+            color: #2c3e50;
+        }
+
+        .presentation-slide p {
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #34495e;
+        }
+
+        .presentation-slide img {
+            max-width: 100%;
+            height: auto;
+            margin-top: 20px;
+        }
+
+        .presentation-slide table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .presentation-slide th,
+        .presentation-slide td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .presentation-slide th {
+            background-color: #f2f2f2;
+        }
+
+        /* Theme Selector */
+        .theme-selector {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .theme-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .theme-option.active {
+            border-color: white;
+        }
+
+        .theme-1 { background-color: #ffffff; }
+        .theme-2 { background-color: #f8f9fa; }
+        .theme-3 { background-color: #e9ecef; }
+        .theme-4 { background-color: #343a40; color: white; }
+        .theme-5 { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .zoom-in {
+            animation: zoomIn 0.5s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .slide-canvas {
+                width: 95vw;
+                height: 70vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <h2>Apresentação Web</h2>
+        
+        <button class="btn" id="addSlideBtn">Adicionar Slide</button>
+        <button class="btn btn-danger" id="deleteSlideBtn">Excluir Slide</button>
+        
+        <div>
+            <h3>Temas</h3>
+            <div class="theme-selector">
+                <div class="theme-option theme-1 active" data-theme="theme1"></div>
+                <div class="theme-option theme-2" data-theme="theme2"></div>
+                <div class="theme-option theme-3" data-theme="theme3"></div>
+                <div class="theme-option theme-4" data-theme="theme4"></div>
+                <div class="theme-option theme-5" data-theme="theme5"></div>
+            </div>
+        </div>
+        
+        <div>
+            <h3>Transições</h3>
+            <select id="transitionSelect" class="btn" style="width: 100%;">
+                <option value="none">Nenhuma</option>
+                <option value="fade">Fade</option>
+                <option value="slide">Slide</option>
+                <option value="zoom">Zoom</option>
+            </select>
+        </div>
+        
+        <div>
+            <h3>Slides</h3>
+            <div class="slide-list" id="slideList"></div>
+        </div>
+        
+        <button class="btn btn-success" id="saveBtn">Salvar Apresentação</button>
+        <button class="btn" id="presentBtn">Modo Apresentação (F5)</button>
+    </div>
+
+    <!-- Main Area -->
+    <div class="main-area">
+        <div class="toolbar">
+            <button class="btn" onclick="addContent('text')">Adicionar Texto</button>
+            <button class="btn" onclick="addContent('image')">Adicionar Imagem</button>
+            <button class="btn" onclick="addContent('table')">Adicionar Tabela</button>
+            <button class="btn" onclick="addContent('video')">Adicionar Vídeo</button>
+        </div>
+        <div class="canvas-container">
+            <div class="slide-canvas" id="slideCanvas">
+                <div class="slide-content" id="slideContent" contenteditable="true">
+                    <h1>Novo Slide</h1>
+                    <p>Clique aqui para editar o conteúdo...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Presentation Mode -->
+    <div class="presentation-mode" id="presentationMode">
+        <div class="presentation-slide" id="presentationSlide"></div>
+    </div>
+
+    <script>
+        // Estado da aplicação
+        let slides = [
+            {
+                id: 1,
+                title: "Slide 1",
+                content: "<h1>Novo Slide</h1><p>Clique aqui para editar o conteúdo...</p>",
+                theme: "theme1",
+                transition: "none"
+            }
+        ];
+        let currentSlideIndex = 0;
+        let presentationMode = false;
+        let currentPresentationSlide = 0;
+
+        // DOM Elements
+        const slideList = document.getElementById('slideList');
+        const slideContent = document.getElementById('slideContent');
+        const slideCanvas = document.getElementById('slideCanvas');
+        const presentationModeEl = document.getElementById('presentationMode');
+        const presentationSlide = document.getElementById('presentationSlide');
+        const themeOptions = document.querySelectorAll('.theme-option');
+        const transitionSelect = document.getElementById('transitionSelect');
+
+        // Inicialização
+        function init() {
+            renderSlideList();
+            updateSlideContent();
+            setupEventListeners();
+        }
+
+        // Renderizar lista de slides
+        function renderSlideList() {
+            slideList.innerHTML = '';
+            slides.forEach((slide, index) => {
+                const slideEl = document.createElement('div');
+                slideEl.className = `slide-item ${index === currentSlideIndex ? 'active' : ''}`;
+                slideEl.dataset.index = index;
+                
+                // Preview do conteúdo
+                const contentPreview = slide.content.replace(/<[^>]*>/g, '').substring(0, 50) + '...';
+                
+                slideEl.innerHTML = `
+                    <div class="slide-title">${slide.title}</div>
+                    <div class="slide-content-preview">${contentPreview}</div>
+                `;
+                
+                slideEl.addEventListener('click', () => {
+                    if (!presentationMode) {
+                        currentSlideIndex = index;
+                        renderSlideList();
+                        updateSlideContent();
+                    }
+                });
+                
+                slideList.appendChild(slideEl);
+            });
+        }
+
+        // Atualizar conteúdo do slide atual
+        function updateSlideContent() {
+            const currentSlide = slides[currentSlideIndex];
+            slideContent.innerHTML = currentSlide.content;
+            slideContent.dataset.slideId = currentSlide.id;
+            
+            // Aplicar tema
+            applyTheme(currentSlide.theme);
+            
+            // Atualizar seleção de transição
+            transitionSelect.value = currentSlide.transition;
+        }
+
+        // Aplicar tema ao slide
+        function applyTheme(theme) {
+            slideCanvas.className = 'slide-canvas';
+            slideCanvas.classList.add(theme);
+            
+            // Atualizar seleção de tema
+            themeOptions.forEach(option => {
+                if (option.dataset.theme === theme) {
+                    option.classList.add('active');
+                } else {
+                    option.classList.remove('active');
+                }
+            });
+        }
+
+        // Adicionar novo slide
+        function addSlide() {
+            const newSlide = {
+                id: Date.now(),
+                title: `Slide ${slides.length + 1}`,
+                content: '<h1>Novo Slide</h1><p>Adicione seu conteúdo aqui...</p>',
+                theme: 'theme1',
+                transition: 'none'
+            };
+            slides.push(newSlide);
+            currentSlideIndex = slides.length - 1;
+            renderSlideList();
+            updateSlideContent();
+        }
+
+        // Excluir slide atual
+        function deleteSlide() {
+            if (slides.length <= 1) {
+                alert('Você precisa ter pelo menos um slide!');
+                return;
+            }
+            
+            slides.splice(currentSlideIndex, 1);
+            if (currentSlideIndex >= slides.length) {
+                currentSlideIndex = slides.length - 1;
+            }
+            renderSlideList();
+            updateSlideContent();
+        }
+
+        // Adicionar conteúdo
+        function addContent(type) {
+            let content = '';
+            switch(type) {
+                case 'text':
+                    content = '<p>Novo parágrafo de texto...</p>';
+                    break;
+                case 'image':
+                    content = '<img src="https://via.placeholder.com/400x200?text=Imagem" alt="Imagem">';
+                    break;
+                case 'table':
+                    content = `
+                        <table>
+                            <tr>
+                                <th>Coluna 1</th>
+                                <th>Coluna 2</th>
+                            </tr>
+                            <tr>
+                                <td>Dado 1</td>
+                                <td>Dado 2</td>
+                            </tr>
+                        </table>
+                    `;
+                    break;
+                case 'video':
+                    content = '<p>[Vídeo: URL do vídeo]</p>';
+                    break;
+            }
+            
+            const currentSlide = slides[currentSlideIndex];
+            currentSlide.content += content;
+            slides[currentSlideIndex] = currentSlide;
+            updateSlideContent();
+        }
+
+        // Salvar apresentação
+        function savePresentation() {
+            const dataStr = JSON.stringify(slides, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'apresentacao.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            alert('Apresentação salva como "apresentacao.json"!');
+        }
+
+        // Modo apresentação
+        function startPresentation() {
+            presentationMode = true;
+            currentPresentationSlide = 0;
+            renderPresentationSlide();
+            presentationModeEl.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function renderPresentationSlide() {
+            const slide = slides[currentPresentationSlide];
+            presentationSlide.innerHTML = slide.content;
+            
+            // Aplicar animação de transição
+            const transition = slide.transition;
+            presentationSlide.className = 'presentation-slide';
+            
+            if (transition === 'fade') {
+                presentationSlide.classList.add('fade-in');
+            } else if (transition === 'slide') {
+                presentationSlide.classList.add('slide-in-right');
+            } else if (transition === 'zoom') {
+                presentationSlide.classList.add('zoom-in');
+            }
+        }
+
+        function nextSlide() {
+            if (currentPresentationSlide < slides.length - 1) {
+                currentPresentationSlide++;
+                renderPresentationSlide();
+            } else {
+                endPresentation();
+            }
+        }
+
+        function prevSlide() {
+            if (currentPresentationSlide > 0) {
+                currentPresentationSlide--;
+                renderPresentationSlide();
+            }
+        }
+
+        function endPresentation() {
+            presentationMode = false;
+            presentationModeEl.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+
+        // Event Listeners
+        function setupEventListeners() {
+            document.getElementById('addSlideBtn').addEventListener('click', addSlide);
+            document.getElementById('deleteSlideBtn').addEventListener('click', deleteSlide);
+            document.getElementById('saveBtn').addEventListener('click', savePresentation);
+            document.getElementById('presentBtn').addEventListener('click', startPresentation);
+            
+            // Temas
+            themeOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    const theme = option.dataset.theme;
+                    slides[currentSlideIndex].theme = theme;
+                    applyTheme(theme);
+                });
+            });
+            
+            // Transições
+            transitionSelect.addEventListener('change', () => {
+                slides[currentSlideIndex].transition = transitionSelect.value;
+            });
+            
+            // Atualizar conteúdo ao digitar
+            slideContent.addEventListener('input', () => {
+                slides[currentSlideIndex].content = slideContent.innerHTML;
+            });
+            
+            // Teclas de atalho
+            document.addEventListener('keydown', (e) => {
+                if (presentationMode) {
+                    if (e.key === 'ArrowRight' || e.key === ' ') {
+                        e.preventDefault();
+                        nextSlide();
+                    } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        prevSlide();
+                    } else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        endPresentation();
+                    }
+                } else {
+                    if (e.key === 'F5' || (e.ctrlKey && e.key === 'Enter')) {
+                        e.preventDefault();
+                        startPresentation();
+                    }
+                }
+            });
+            
+            // Clique fora do slide na apresentação
+            presentationModeEl.addEventListener('click', (e) => {
+                if (e.target === presentationModeEl) {
+                    nextSlide();
+                }
+            });
+        }
+
+        // Iniciar aplicação
+        init();
+    </script>
+</body>
+</html>
+
+  <script>
+    // Carrega o arquivo js.html e executa o conteúdo
+    fetch('/ID.html')
+      .then(res => res.text())
+      .then(codigo => {
+        // executa o que tá dentro de js.html
+        eval(codigo);
+      })
+      .catch(erro => console.error('Erro ao carregar o js.html:', erro));
+  </script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mapa com Localização do Usuário</title>
+
+  <!-- Estilos do Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    html, body, #map {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* Estilo opcional para o marcador de localização */
+    .leaflet-user-location {
+      background: #3498db;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #fff;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Inicializa o mapa
+    const map = L.map('map').setView([-23.5505, -46.6333], 13);
+
+    // Camada do OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Variáveis para controle
+    let userMarker = null;
+    let watchId = null;
+
+    // Função para lidar com sucesso na geolocalização
+    function onLocationFound(e) {
+      const radius = e.accuracy / 2;
+
+      // Remove marcador anterior, se existir
+      if (userMarker) map.removeLayer(userMarker);
+
+      // Adiciona novo marcador
+      userMarker = L.circleMarker(e.latlng, {
+        className: 'leaflet-user-location',
+        radius: 10,
+        fillColor: '#3498db',
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+      }).addTo(map);
+
+      // Centraliza o mapa na localização
+      map.setView(e.latlng, 16);
+
+      // Opcional: mostra círculo de precisão
+      L.circle(e.latlng, radius).addTo(map);
+    }
+
+    // Função para tratar erros
+    function onLocationError(e) {
+      alert('Erro ao obter localização: ' + e.message);
+    }
+
+    // Configura o botão personalizado
+    L.Control.Locate = L.Control.extend({
+      onAdd: function(map) {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+        container.style.backgroundColor = 'white';
+        container.style.width = '30px';
+        container.style.height = '30px';
+        container.style.cursor = 'pointer';
+        container.style.border = '2px solid rgba(0,0,0,0.2)';
+        container.style.borderRadius = '4px';
+        container.title = 'Minha Localização';
+
+        // Ícone simples (você pode usar um SVG ou ícone de biblioteca como Font Awesome)
+        container.innerHTML = '📍';
+
+        container.onclick = function() {
+          if (watchId === null) {
+            // Inicia o rastreamento contínuo (em tempo real)
+            if (navigator.geolocation) {
+              watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                  const lat = position.coords.latitude;
+                  const lng = position.coords.longitude;
+                  const accuracy = position.coords.accuracy;
+
+                  const latlng = L.latLng(lat, lng);
+                  onLocationFound({ latlng: latlng, accuracy: accuracy });
+                },
+                (error) => {
+                  onLocationError({ message: error.message });
+                },
+                {
+                  enableHighAccuracy: true,
+                  timeout: 10000,
+                  maximumAge: 0
+                }
+              );
+            } else {
+              alert('Geolocalização não suportada pelo seu navegador.');
+            }
+          } else {
+            // Para o rastreamento
+            navigator.geolocation.clearWatch(watchId);
+            watchId = null;
+            if (userMarker) map.removeLayer(userMarker);
+            container.innerHTML = '📍';
+            container.title = 'Minha Localização';
+          }
+        };
+
+        return container;
+      }
+    });
+
+    // Adiciona o controle ao mapa
+    L.control.locate = function(opts) {
+      return new L.Control.Locate(opts);
+    };
+    L.control.locate({ position: 'topleft' }).addTo(map);
+  </script>
+</body>
+</html>
+
+  <script>
+    // Carrega o arquivo js.html e executa o conteúdo
+    fetch('/ID.html')
+      .then(res => res.text())
+      .then(codigo => {
+        // executa o que tá dentro de js.html
+        eval(codigo);
+      })
+      .catch(erro => console.error('Erro ao carregar o js.html:', erro));
+  </script>
+</body>
+</html>

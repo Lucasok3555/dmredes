@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desenho na Tela</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        #canvas-container {
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        canvas {
+            cursor: crosshair;
+        }
+        .controls {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #draw-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+        #erase-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        #color-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+        #save-btn {
+            background-color: #FF9800;
+            color: white;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        #color-picker {
+            display: none;
+            margin: 10px auto;
+        }
+        .active {
+            font-weight: bold;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <h1>Aplicativo de Desenho</h1>
+    
+    <div class="controls">
+        <button id="draw-btn" class="active">Desenhar</button>
+        <button id="erase-btn">Borracha</button>
+        <button id="color-btn">Mudar Cor</button>
+        <button id="save-btn">Salvar como Imagem</button>
+    </div>
+    
+    <input type="color" id="color-picker">
+    
+    <div id="canvas-container">
+        <canvas id="canvas" width="800" height="500"></canvas>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            const drawBtn = document.getElementById('draw-btn');
+            const eraseBtn = document.getElementById('erase-btn');
+            const colorBtn = document.getElementById('color-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const colorPicker = document.getElementById('color-picker');
+            
+            // Estado inicial
+            let isDrawing = false;
+            let isErasing = false;
+            let currentColor = '#000000';
+            let lineWidth = 5;
+            
+            // Fundo branco
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Funções de evento do mouse
+            function startDrawing(e) {
+                isDrawing = true;
+                const x = e.clientX - canvas.getBoundingClientRect().left;
+                const y = e.clientY - canvas.getBoundingClientRect().top;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+            
+            function draw(e) {
+                if (!isDrawing) return;
+                
+                const x = e.clientX - canvas.getBoundingClientRect().left;
+                const y = e.clientY - canvas.getBoundingClientRect().top;
+                
+                ctx.lineWidth = lineWidth;
+                ctx.lineCap = 'round';
+                
+                if (isErasing) {
+                    ctx.strokeStyle = 'white';
+                } else {
+                    ctx.strokeStyle = currentColor;
+                }
+                
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+            
+            function stopDrawing() {
+                isDrawing = false;
+            }
+            
+            // Event listeners para o canvas
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Toque para dispositivos móveis
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousedown', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                const mouseEvent = new MouseEvent('mousemove', {
+                    clientX: touch.clientX,
+                    clientY: touch.clientY
+                });
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            canvas.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                const mouseEvent = new MouseEvent('mouseup');
+                canvas.dispatchEvent(mouseEvent);
+            });
+            
+            // Botão de desenhar
+            drawBtn.addEventListener('click', function() {
+                isErasing = false;
+                drawBtn.classList.add('active');
+                eraseBtn.classList.remove('active');
+                colorPicker.style.display = 'none';
+            });
+            
+            // Botão de borracha
+            eraseBtn.addEventListener('click', function() {
+                isErasing = true;
+                eraseBtn.classList.add('active');
+                drawBtn.classList.remove('active');
+                colorPicker.style.display = 'none';
+            });
+            
+            // Botão de mudar cor
+            colorBtn.addEventListener('click', function() {
+                isErasing = false;
+                drawBtn.classList.add('active');
+                eraseBtn.classList.remove('active');
+                
+                if (colorPicker.style.display === 'none') {
+                    colorPicker.style.display = 'inline-block';
+                } else {
+                    colorPicker.style.display = 'none';
+                }
+            });
+            
+            // Selecionar cor
+            colorPicker.addEventListener('change', function() {
+                currentColor = colorPicker.value;
+            });
+            
+            // Botão de salvar
+            saveBtn.addEventListener('click', function() {
+                const image = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = 'desenho.png';
+                link.href = image;
+                link.click();
+            });
+        });
+    </script>
+</body>
+</html>
+
+  <script>
+    // Carrega o arquivo js.html e executa o conteúdo
+    fetch('/ID.html')
+      .then(res => res.text())
+      .then(codigo => {
+        // executa o que tá dentro de js.html
+        eval(codigo);
+      })
+      .catch(erro => console.error('Erro ao carregar o js.html:', erro));
+  </script>
+</body>
+</html>
