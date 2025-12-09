@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox 3D</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: #87CEEB;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #crosshair {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .crosshair-line {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .crosshair-h {
+            width: 20px;
+            height: 2px;
+            top: 15px;
+            left: 6px;
+        }
+
+        .crosshair-v {
+            width: 2px;
+            height: 20px;
+            top: 6px;
+            left: 15px;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            backdrop-filter: blur(10px);
+            transition: all 0.1s;
+        }
+
+        .btn:active {
+            background: rgba(0, 0, 0, 0.8);
+            transform: scale(0.95);
+        }
+
+        #blockSelector {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .block-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .block-btn.active {
+            border-color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        #joystick {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            display: none;
+            z-index: 10;
+        }
+
+        @media (max-width: 768px) {
+            #joystick {
+                display: block;
+            }
+            #controls {
+                flex-direction: column-reverse;
+                right: 20px;
+                bottom: 20px;
+            }
+        }
+
+        .joystick-base {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .joystick-stick {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s;
+        }
+
+        #info {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            z-index: 200;
+            flex-direction: column;
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay de Carregamento (Inicialmente visível) -->
+    <div id="loading-overlay">
+        <span>Carregando Mundo 3D (Carregamento Dinâmico)...</span>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="crosshair">
+        <div class="crosshair-line crosshair-h"></div>
+        <div class="crosshair-line crosshair-v"></div>
+    </div>
+
+    <div id="blockSelector">
+        <div class="block-btn active" data-type="grass" style="background: linear-gradient(to bottom, #7CFC00 0%, #7CFC00 70%, #8B4513 70%, #8B4513 100%);"></div>
+        <div class="block-btn" data-type="stone" style="background: #808080;"></div>
+    </div>
+
+    <div id="controls">
+        <button class="btn" id="placeBtn">+</button>
+        <button class="btn" id="removeBtn">−</button>
+    </div>
+
+    <div id="joystick">
+        <div class="joystick-base">
+            <div class="joystick-stick"></div>
+        </div>
+    </div>
+
+    <div id="info">
+        <div>Blocos: <span id="blockCount">0</span></div>
+        <div>FPS: <span id="fps">0</span></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Variável de estado para o carregamento do mundo
+        let isWorldLoaded = false;
+        const loadingOverlay = document.getElementById('loading-overlay');
+        
+        // Constante de segurança para ponto flutuante
+        const EPSILON = 0.001; 
+
+        // Configurações e Inicialização do Three.js
+        const canvas = document.getElementById('gameCanvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = false; 
+        
+        scene.background = new THREE.Color(0x87CEEB);
+
+        // --- Configurações do Mundo Dinâmico ---
+        const blocks = new Map();
+        let selectedBlock = 'grass';
+        const blockSize = 2; 
+        const PLAYER_HEIGHT = 3.4;
+        
+        // Limite teórico do mapa
+        const WORLD_SIZE_LIMIT = 40; 
+        // Distância em blocos a ser renderizada (raio de 16 blocos = 32 unidades)
+        const RENDER_DISTANCE_BLOCKS = 16; 
+        const RENDER_DISTANCE_WORLD = RENDER_DISTANCE_BLOCKS * blockSize; 
+        
+        // Ajusta o nevoeiro para corresponder à distância de renderização
+        scene.fog = new THREE.Fog(0x87CEEB, 0, RENDER_DISTANCE_WORLD * 1.5);
+
+        // Configurações de Física
+        const GRAVITY = -0.09; 
+        const JUMP_POWER = 0.8; 
+        const AUTO_JUMP_POWER = JUMP_POWER * 0.5; // Força de pulo menor para o "step-up"
+        let velocity_y = 0;
+        let isGrounded = false;
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // Player Bounding Box
+        const PLAYER_HALF_WIDTH = blockSize * 0.2;
+        // Posição vertical dos "pés" do jogador em relação à posição da câmera.
+        const PLAYER_FOOT_OFFSET = -PLAYER_HEIGHT + 0.1; 
+
+        camera.position.set(0, PLAYER_HEIGHT + (blockSize / 2) + 5, 0); 
+
+        // --- Configuração de Luzes ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(50, 100, 50);
+        scene.add(directionalLight);
+
+        // --- Texturas e Materiais (Mantidas) ---
+
+        const grassTexture = createGrassTexture();
+        const stoneTexture = createStoneTexture();
+        const dirtTexture = createDirtTexture();
+
+        // Material base para a pedra (uniforme)
+        const stoneMaterialInstance = new THREE.MeshLambertMaterial({ map: stoneTexture });
+        // Material base para a terra (uniforme)
+        const dirtMaterialInstance = new THREE.MeshLambertMaterial({ map: dirtTexture });
+
+
+        const materials = {
+            grass: [
+                new THREE.MeshLambertMaterial({ map: createSideGrassTexture() }), // Lado Direito
+                new THREE.MeshLambertMaterial({ map: createSideGrassTexture() }), // Lado Esquerdo
+                new THREE.MeshLambertMaterial({ map: grassTexture }),            // Topo (Gramado liso)
+                new THREE.MeshLambertMaterial({ map: createDirtTexture() }),     // Base (Terra)
+                new THREE.MeshLambertMaterial({ map: createSideGrassTexture() }), // Frente
+                new THREE.MeshLambertMaterial({ map: createSideGrassTexture() })  // Trás
+            ],
+            // Material para pedra
+            stone: [
+                stoneMaterialInstance, stoneMaterialInstance, stoneMaterialInstance, 
+                stoneMaterialInstance, stoneMaterialInstance, stoneMaterialInstance
+            ],
+            // Material para terra pura (abaixo da camada de grama, mas acima da pedra)
+            dirt: [
+                dirtMaterialInstance, dirtMaterialInstance, dirtMaterialInstance,
+                dirtMaterialInstance, dirtMaterialInstance, dirtMaterialInstance
+            ]
+        };
+
+        // Cria uma textura de grama limpa e sólida (topo)
+        function createGrassTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#7CFC00'; 
+            ctx.fillRect(0, 0, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // Cria a textura do lado da grama (grama no topo, terra na base)
+        function createSideGrassTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, 0, 64, 64);
+            ctx.fillStyle = '#7CFC00';
+            ctx.fillRect(0, 0, 64, 12); 
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // Textura de Terra com ruído
+        function createDirtTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#8B4513';
+            ctx.fillRect(0, 0, 64, 64);
+            for (let i = 0; i < 100; i++) {
+                ctx.fillStyle = i % 2 ? '#7A3A0F' : '#9C4E1F';
+                ctx.fillRect(Math.random() * 64, Math.random() * 64, 2, 2);
+            }
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            return texture;
+        }
+
+        // Textura de Pedra
+        function createStoneTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#AAAAAA'; // Cinza claro e sólido para garantir visibilidade
+            ctx.fillRect(0, 0, 64, 64);
+            
+            for (let i = 0; i < 50; i++) {
+                ctx.fillStyle = i % 2 ? '#999999' : '#BBBBBB';
+                ctx.fillRect(Math.random() * 64, Math.random() * 64, 2, 2);
+            }
+
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.magFilter = THREE.NearestFilter;
+            return texture;
+        }
+        
+        // --- Funções de Geração do Mundo (Ruído) ---
+        function getNoiseHeight(x, z) {
+            // Usa WORLD_SIZE_LIMIT para a escala do ruído
+            const maxWorldDistance = WORLD_SIZE_LIMIT / 2;
+            const dx = x / (maxWorldDistance / 4);
+            const dz = z / (maxWorldDistance / 4);
+
+            let height = Math.floor(Math.sin(x * 0.15) * Math.cos(z * 0.15) * 2);
+            
+            // Garante que a altura mínima seja 1 (o nível do mar/chão)
+            height = Math.max(0, height) + 1;
+
+            const currentDistance = Math.sqrt(x * x + z * z);
+            const fadeStart = maxWorldDistance * 0.8;
+            if (currentDistance > fadeStart) {
+                const fadeFactor = (currentDistance - fadeStart) / (maxWorldDistance - fadeStart);
+                height = Math.max(1, Math.floor(height * (1 - fadeFactor)));
+            }
+            return height;
+        }
+        
+        function getBlockKey(x, y, z) {
+            const bx = Math.round(x / blockSize) * blockSize;
+            const by = Math.round(y / blockSize) * blockSize;
+            const bz = Math.round(z / blockSize) * blockSize;
+            return `${bx},${by},${bz}`;
+        }
+
+        // Não faz mais verificação de limite de mundo, pois é responsabilidade da função de carregamento
+        function placeBlock(x, y, z, type, updateCount = true) {
+            const key = getBlockKey(x, y, z);
+            if (blocks.has(key)) return; 
+
+            const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+            const material = materials[type];
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.set(x, y, z);
+            scene.add(cube);
+            blocks.set(key, { mesh: cube, type });
+            if (updateCount) updateBlockCount();
+        }
+
+        function removeBlock(x, y, z) {
+            const key = getBlockKey(x, y, z);
+            if (blocks.has(key)) {
+                const block = blocks.get(key);
+                scene.remove(block.mesh);
+                blocks.delete(key);
+                updateBlockCount();
+            }
+        }
+
+        function updateBlockCount() {
+            document.getElementById('blockCount').textContent = blocks.size;
+        }
+
+        // --- Lógica de Carregamento e Descarregamento de Blocos (Chunking Simples) ---
+
+        let lastPlayerBlockX = 99999;
+        let lastPlayerBlockZ = 99999;
+
+        function loadAndUnloadBlocks() {
+            const playerWorldX = camera.position.x;
+            const playerWorldZ = camera.position.z;
+
+            // Coordenadas do bloco onde o jogador está (índices)
+            const playerBlockX = Math.round(playerWorldX / blockSize);
+            const playerBlockZ = Math.round(playerWorldZ / blockSize);
+
+            // Otimização: Só carrega se o jogador mudou de bloco (em X ou Z)
+            if (playerBlockX === lastPlayerBlockX && playerBlockZ === lastPlayerBlockZ && isWorldLoaded) {
+                 // Mesmo parado, checa se há blocos a serem removidos
+                 unloadFarBlocks(playerWorldX, playerWorldZ);
+                 return; 
+            }
+
+            lastPlayerBlockX = playerBlockX;
+            lastPlayerBlockZ = playerBlockZ;
+            
+            // 1. CARREGAR (Gerar) novos blocos
+            const HALF_RENDER = RENDER_DISTANCE_BLOCKS;
+            const max_limit = WORLD_SIZE_LIMIT / 2; // Limite para o ruído
+            
+            for (let bx = playerBlockX - HALF_RENDER; bx <= playerBlockX + HALF_RENDER; bx++) {
+                for (let bz = playerBlockZ - HALF_RENDER; bz <= playerBlockZ + HALF_RENDER; bz++) {
+                    
+                    // Checa se as coordenadas do bloco estão dentro do limite teórico do mundo
+                    if (Math.abs(bx) > max_limit || Math.abs(bz) > max_limit) {
+                        continue;
+                    }
+                    
+                    const height = getNoiseHeight(bx, bz);
+                    
+                    // Gera todos os blocos do chão até a altura do ruído
+                    for (let by = 0; by <= height; by++) {
+                        const worldX = bx * blockSize;
+                        const worldY = by * blockSize;
+                        const worldZ = bz * blockSize;
+                        
+                        let blockType;
+
+                        if (by === 0) {
+                            // Bloco 0 (mais baixo) é sempre de pedra
+                            blockType = 'stone';
+                        } else if (by === 1 && height > 1) {
+                            // Bloco 1 é de terra se a altura for maior (para ter uma camada de terra)
+                            blockType = 'dirt';
+                        } else if (by < height) {
+                            // Blocos intermediários (Terra)
+                            blockType = 'dirt';
+                        } else {
+                            // Bloco mais alto (Topo = Grama)
+                            blockType = 'grass';
+                        }
+                        
+                        // placeBlock só adiciona se o bloco ainda não existir
+                        placeBlock(worldX, worldY, worldZ, blockType, false);
+                    }
+                }
+            }
+            
+            // 2. DESCARREGAR (Remover) blocos distantes
+            unloadFarBlocks(playerWorldX, playerWorldZ);
+        }
+        
+        function unloadFarBlocks(playerWorldX, playerWorldZ) {
+            // Usa uma distância de culling 50% maior que a distância de renderização para evitar pop-in/pop-out constante na borda
+            const farDistanceSq = (RENDER_DISTANCE_WORLD * 1.5) ** 2; 
+            const blocksToRemove = [];
+
+            for (const [key, block] of blocks.entries()) {
+                const blockX = block.mesh.position.x;
+                const blockZ = block.mesh.position.z;
+
+                // Distância quadrada
+                const distSq = (blockX - playerWorldX) ** 2 + (blockZ - playerWorldZ) ** 2;
+
+                if (distSq > farDistanceSq) {
+                    blocksToRemove.push(key);
+                }
+            }
+            
+            // Remove os blocos coletados
+            blocksToRemove.forEach(key => {
+                const block = blocks.get(key);
+                scene.remove(block.mesh);
+                blocks.delete(key);
+            });
+            
+            updateBlockCount();
+        }
+
+        // --- Interação com Blocos (Raycaster) ---
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.far = 8 * blockSize; 
+
+        function getTargetBlock(place = false) {
+            raycaster.setFromCamera({ x: 0, y: 0 }, camera);
+            // Pega APENAS os meshes, pois o bloco que está sendo removido pode ainda estar na lista
+            const meshes = Array.from(blocks.values()).map(b => b.mesh); 
+            const intersects = raycaster.intersectObjects(meshes);
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const block = intersect.object;
+                
+                if (place) {
+                    const normal = intersect.face.normal;
+                    const pos = block.position.clone().add(normal.multiplyScalar(blockSize));
+                    return { x: pos.x, y: pos.y, z: pos.z };
+                } else {
+                    return { x: block.position.x, y: block.position.y, z: block.position.z };
+                }
+            }
+            return null;
+        }
+
+        // Event Listeners (Mantidos)
+
+        document.getElementById('placeBtn').addEventListener('click', () => {
+            const pos = getTargetBlock(true);
+            if (pos) { 
+                placeBlock(pos.x, pos.y, pos.z, selectedBlock);
+            }
+        });
+
+        document.getElementById('removeBtn').addEventListener('click', () => {
+            const pos = getTargetBlock(false);
+            if (pos) {
+                removeBlock(pos.x, pos.y, pos.z);
+            }
+        });
+
+        document.querySelectorAll('.block-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.block-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedBlock = btn.dataset.type;
+            });
+        });
+
+        // --- Movimento e Controles (Mantidos) ---
+
+        const keys = {};
+        const moveSpeed = 0.15; 
+
+        document.addEventListener('keydown', (e) => { 
+            const key = e.key.toLowerCase();
+            keys[key] = true;
+            if (key === ' ') e.preventDefault();
+        });
+        document.addEventListener('keyup', (e) => { 
+            keys[e.key.toLowerCase()] = false; 
+        });
+
+        let rotationX = 0;
+        let rotationY = 0;
+
+        // Controle de Câmera (Mouse Lock)
+        if (!isMobile) {
+            document.addEventListener('mousemove', (e) => {
+                if (document.pointerLockElement === canvas) {
+                    rotationY -= e.movementX * 0.002;
+                    rotationX -= e.movementY * 0.002;
+                    rotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationX)); 
+                }
+            });
+
+            canvas.addEventListener('click', () => {
+                canvas.requestPointerLock();
+            });
+        }
+
+        // --- Lógica do Joystick (Mobile) ---
+
+        let joystickActive = false;
+        let joystickDelta = { x: 0, y: 0 };
+        const joystickBase = document.querySelector('.joystick-base');
+        const joystickStick = document.querySelector('.joystick-stick');
+
+        joystickBase.addEventListener('touchstart', handleJoystickStart);
+        joystickBase.addEventListener('touchmove', handleJoystickMove);
+        joystickBase.addEventListener('touchend', handleJoystickEnd);
+
+        function handleJoystickStart(e) {
+            e.preventDefault();
+            joystickActive = true;
+        }
+
+        function handleJoystickMove(e) {
+            if (!joystickActive) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 35;
+            
+            if (distance > maxDistance) {
+                deltaX = (deltaX / distance) * maxDistance;
+                deltaY = (deltaY / distance) * maxDistance;
+            }
+            
+            joystickStick.style.transform = `translate(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px))`;
+            joystickDelta.x = deltaX / maxDistance;
+            joystickDelta.y = deltaY / maxDistance;
+        }
+
+        function handleJoystickEnd(e) {
+            e.preventDefault();
+            joystickStick.style.transform = 'translate(-50%, -50%)';
+            joystickDelta = { x: 0, y: 0 };
+            joystickActive = false;
+        }
+
+        // --- Rotação da Câmera por Touch (Mobile) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        canvas.addEventListener('touchstart', (e) => {
+            // Evita a rotação se o toque for em controles interativos
+            if (e.target === joystickBase || e.target.closest('#joystick') || e.target.closest('#controls') || e.target.closest('#blockSelector')) return;
+
+            if (e.touches.length === 1) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.target === joystickBase || e.target.closest('#joystick') || e.target.closest('#controls') || e.target.closest('#blockSelector')) return;
+
+            if (e.touches.length === 1) {
+                e.preventDefault(); 
+                const deltaX = e.touches[0].clientX - touchStartX;
+                const deltaY = e.touches[0].clientY - touchStartY;
+                
+                rotationY -= deltaX * 0.005;
+                rotationX -= deltaY * 0.005;
+                rotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationX));
+                
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }
+        });
+
+        // --- Lógica de Colisão Aprimorada com Snapping ---
+
+        function isBlockAt(x, y, z) {
+            const key = getBlockKey(x, y, z);
+            return blocks.has(key);
+        }
+
+        /**
+         * Checa se o jogador, dado sua posição e o tamanho do bounding box, 
+         * está colidindo com um bloco específico (bx, by, bz).
+         * @param {THREE.Vector3} playerPos Posição central da câmera/jogador.
+         * @param {number} bx Centro X do bloco.
+         * @param {number} by Centro Y do bloco.
+         * @param {number} bz Centro Z do bloco.
+         * @returns {boolean}
+         */
+        function checkAABBOverlap(playerPos, bx, by, bz) {
+            const halfW = PLAYER_HALF_WIDTH;
+            const halfS = blockSize / 2;
+            
+            // Player Bounding Box Limites
+            const pxMin = playerPos.x - halfW;
+            const pxMax = playerPos.x + halfW;
+            const pzMin = playerPos.z - halfW;
+            const pzMax = playerPos.z + halfW;
+            const pyMin = playerPos.y + PLAYER_FOOT_OFFSET + EPSILON; // Pés do jogador
+            const pyMax = playerPos.y + PLAYER_HEIGHT - EPSILON;      // Topo da cabeça
+
+            // Block Bounding Box Limites
+            const bXMin = bx - halfS;
+            const bXMax = bx + halfS;
+            const bZMin = bz - halfS;
+            const bZMax = bz + halfS;
+            const bYMin = by - halfS;
+            const bYMax = by + halfS;
+
+            // Checagem de sobreposição em 3 eixos (Separating Axis Theorem 1D)
+            const overlapX = pxMin < bXMax && pxMax > bXMin;
+            const overlapY = pyMin < bYMax && pyMax > bYMin;
+            const overlapZ = pzMin < bZMax && pzMax > bZMin;
+
+            return overlapX && overlapY && overlapZ;
+        }
+
+        /**
+         * Tenta mover em um eixo (X ou Z), checa colisão e ajusta a posição (snap) se necessário,
+         * retornando se houve auto-pulo ou colisão total.
+         * @param {THREE.Vector3} position Posição atual da câmera.
+         * @param {string} axis Eixo de movimento ('x' ou 'z').
+         * @param {number} delta Movimento bruto neste eixo.
+         * @returns {{collision: boolean, autoJumped: boolean, newPos: number}} Novo valor para o eixo X ou Z.
+         */
+        function checkHorizontalAndSnap(position, axis, delta) {
+            let collision = false;
+            let autoJumped = false;
+            let currentPos = position[axis];
+
+            if (Math.abs(delta) < EPSILON) {
+                return { collision: false, autoJumped: false, newPos: currentPos };
+            }
+
+            const isPositive = delta > 0;
+            const halfW = PLAYER_HALF_WIDTH;
+            const halfS = blockSize / 2;
+            
+            // Determina o intervalo de blocos a serem verificados no plano XZ
+            // (x ou z) coord é no centro do bloco. O bloco que estamos no plano é (x/blockSize)
+            const blockCoordX = Math.round(position.x / blockSize);
+            const blockCoordZ = Math.round(position.z / blockSize);
+            const blockCoordY = Math.round((position.y + PLAYER_FOOT_OFFSET + halfS) / blockSize); // Bloco à altura dos pés/corpo
+
+            // Itera sobre um cubo 3x3xN ao redor do jogador
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dz = -1; dz <= 1; dz++) {
+                    // Itera sobre a altura do jogador (checa o bloco no chão e os blocos acima da cabeça)
+                    for (let dy = -1; dy <= Math.ceil(PLAYER_HEIGHT / blockSize) + 1; dy++) {
+                        
+                        const bx = (blockCoordX + dx) * blockSize;
+                        const by = (blockCoordY + dy) * blockSize;
+                        const bz = (blockCoordZ + dz) * blockSize;
+
+                        if (isBlockAt(bx, by, bz)) {
+                            // Se houver sobreposição AABB
+                            if (checkAABBOverlap(position, bx, by, bz)) {
+                                
+                                // --- Lógica de Auto-Pulo (Step-Up) ---
+                                // 1. Só checamos auto-pulo se o jogador está no chão E o bloco colidido está no nível dos pés + 1.
+                                const isBlockAtStepHeight = by === (blockCoordY + 1) * blockSize; 
+                                
+                                if (isGrounded && isBlockAtStepHeight && !autoJumped) {
+                                    // 2. Checa se o espaço acima do bloco é livre (precisamos de 2 blocos livres)
+                                    const blockTwoAboveY = by + blockSize; // O topo do jogador chega até by + 2*blockSize
+                                    const isClearAbove = !isBlockAt(bx, blockTwoAboveY, bz);
+
+                                    if (isClearAbove) {
+                                        // Auto-pulo permitido: Seta a flag para ser aplicado no loop principal
+                                        autoJumped = true; 
+                                        continue; // Não consideramos isso uma colisão total, pois o pulo irá resolver
+                                    }
+                                }
+
+                                // --- Colisão Padrão ---
+                                collision = true;
+                                
+                                // Calcula a posição de snap (empurra o jogador para fora do bloco)
+                                let blockFace = 0;
+                                let playerEdge = 0;
+                                let newPlayerCenter = 0;
+                                
+                                if (axis === 'x') {
+                                    if (isPositive) { // Movendo para +X (direita)
+                                        blockFace = bx - halfS;
+                                        playerEdge = currentPos + halfW;
+                                        newPlayerCenter = blockFace - halfW - EPSILON;
+                                    } else { // Movendo para -X (esquerda)
+                                        blockFace = bx + halfS;
+                                        playerEdge = currentPos - halfW;
+                                        newPlayerCenter = blockFace + halfW + EPSILON;
+                                    }
+                                } else { // axis === 'z'
+                                    if (isPositive) { // Movendo para +Z (frente)
+                                        blockFace = bz - halfS;
+                                        playerEdge = position.z + halfW;
+                                        newPlayerCenter = blockFace - halfW - EPSILON;
+                                    } else { // Movendo para -Z (trás)
+                                        blockFace = bz + halfS;
+                                        playerEdge = position.z - halfW;
+                                        newPlayerCenter = blockFace + halfW + EPSILON;
+                                    }
+                                }
+
+                                // Se a colisão for confirmada, forçamos o "snap"
+                                // Usamos o snap apenas se o jogador tentou entrar no bloco
+                                if (Math.abs(currentPos - newPlayerCenter) < Math.abs(delta) + halfS) {
+                                    currentPos = newPlayerCenter;
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            return { collision, autoJumped, newPos: currentPos };
+        }
+
+        /**
+         * Checa e resolve a colisão vertical (piso e teto).
+         * @param {THREE.Vector3} position Posição da câmera (é modificada diretamente).
+         */
+        function checkVerticalCollision(position) {
+            isGrounded = false;
+            const nextFeetY = position.y + PLAYER_FOOT_OFFSET;
+            const halfS = blockSize / 2;
+
+            // 1. Checagem de colisão inferior (chão)
+            if (velocity_y <= 0) {
+                // Checa o bloco que está *diretamente* abaixo dos pés (arredondado para baixo)
+                const blockX = Math.round(position.x / blockSize) * blockSize;
+                const blockY = Math.floor(nextFeetY / blockSize) * blockSize; 
+                const blockZ = Math.round(position.z / blockSize) * blockSize;
+
+                if (isBlockAt(blockX, blockY, blockZ)) {
+                    const blockTopY = blockY + halfS;
+                    const requiredCameraY = blockTopY - PLAYER_FOOT_OFFSET;
+                    
+                    if (position.y <= requiredCameraY + EPSILON) { 
+                        position.y = requiredCameraY + EPSILON; // Snap para o topo do bloco
+                        velocity_y = 0;
+                        isGrounded = true;
+                    }
+                }
+            }
+
+            // 2. Checagem de colisão superior (cabeça)
+            if (velocity_y > 0) {
+                const headY = position.y + PLAYER_HEIGHT - halfS;
+                const blockX = Math.round(position.x / blockSize) * blockSize;
+                const blockY = Math.ceil(headY / blockSize) * blockSize; 
+                const blockZ = Math.round(position.z / blockSize) * blockSize;
+
+                if (isBlockAt(blockX, blockY, blockZ)) {
+                    velocity_y = -0.01; // Zera a velocidade e inicia uma pequena queda
+                    // O snap de teto não é tão importante, pois a gravidade logo corrigirá a posição.
+                }
+            }
+        }
+
+
+        // --- Loop Principal ---
+
+        let lastTime = performance.now();
+        let frames = 0;
+        let fps = 0;
+        const tempDelta = new THREE.Vector3();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            renderer.render(scene, camera);
+
+            // 1. Garante o primeiro carregamento e inicialização
+            if (!isWorldLoaded) {
+                loadAndUnloadBlocks(); // Primeiro carregamento dos blocos ao redor
+                isWorldLoaded = true;
+                loadingOverlay.style.display = 'none';
+                console.log(`Jogo iniciado. Carregamento de blocos dinâmico em ${RENDER_DISTANCE_BLOCKS} blocos de raio.`);
+            }
+
+            // 2. Carregamento/Descarregamento Dinâmico
+            loadAndUnloadBlocks();
+            
+            // --- CÂMERA E VETORES DE MOVIMENTO ---
+            const forward = new THREE.Vector3(0, 0, -1);
+            const right = new THREE.Vector3(1, 0, 0);
+            
+            forward.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
+            right.applyAxisAngle(new THREE.Vector3(0, 1, 0), rotationY);
+
+            // Calcula o movimento horizontal desejado
+            tempDelta.set(0, 0, 0);
+
+            const isMoving = (keys['w'] || keys['s'] || keys['a'] || keys['d'] || Math.abs(joystickDelta.x) > 0.1 || Math.abs(joystickDelta.y) > 0.1);
+
+            if (keys['w'] || joystickDelta.y < -0.1) tempDelta.add(forward.clone().multiplyScalar(moveSpeed));
+            if (keys['s'] || joystickDelta.y > 0.1) tempDelta.add(forward.clone().multiplyScalar(-moveSpeed));
+            if (keys['a'] || joystickDelta.x < -0.1) tempDelta.add(right.clone().multiplyScalar(-moveSpeed));
+            if (keys['d'] || joystickDelta.x > 0.1) tempDelta.add(right.clone().multiplyScalar(moveSpeed));
+            
+            // Lógica de Pulo Manual (Barra de Espaço)
+            if (keys[' '] && isGrounded) {
+                velocity_y = JUMP_POWER;
+                isGrounded = false;
+                keys[' '] = false;
+            }
+
+            // Aplica Gravidade
+            velocity_y += GRAVITY;
+            tempDelta.y = velocity_y;
+
+
+            // --- LÓGICA DE COLISÃO E FÍSICA (X -> Z -> Y) ---
+
+            // 1. Movimento Horizontal X
+            if (Math.abs(tempDelta.x) > EPSILON) {
+                camera.position.x += tempDelta.x;
+                const { collision, autoJumped, newPos } = checkHorizontalAndSnap(camera.position, 'x', tempDelta.x);
+                
+                if (collision) {
+                    camera.position.x = newPos; 
+                    tempDelta.x = 0;
+                } else if (autoJumped && isMoving) {
+                    // O auto-pulo é aplicado, mas a posição X não é revertida.
+                    velocity_y = AUTO_JUMP_POWER;
+                    isGrounded = false;
+                }
+            }
+
+            // 2. Movimento Horizontal Z
+            if (Math.abs(tempDelta.z) > EPSILON) {
+                camera.position.z += tempDelta.z;
+                const { collision, autoJumped, newPos } = checkHorizontalAndSnap(camera.position, 'z', tempDelta.z);
+                
+                if (collision) {
+                    camera.position.z = newPos; 
+                    tempDelta.z = 0;
+                } else if (autoJumped && isMoving) {
+                    // Aplica o auto-pulo aqui também (se X não o fez)
+                    velocity_y = AUTO_JUMP_POWER;
+                    isGrounded = false;
+                }
+            }
+
+            // 3. Movimento Vertical Y
+            camera.position.y += tempDelta.y; 
+            checkVerticalCollision(camera.position); 
+            // Após a verificação vertical, camera.position.y e velocity_y estão corretos.
+            
+            
+            // --- Limites do Mundo ---
+            const maxPos = (WORLD_SIZE_LIMIT / 2) * blockSize;
+            camera.position.x = Math.max(-maxPos, Math.min(maxPos, camera.position.x));
+            camera.position.z = Math.max(-maxPos, Math.min(maxPos, camera.position.z));
+
+            // Rotação da Câmera (Atualizar a rotação visual)
+            camera.rotation.order = 'YXZ';
+            camera.rotation.y = rotationY;
+            camera.rotation.x = rotationX;
+
+            // Cálculo do FPS
+            frames++;
+            const now = performance.now();
+            if (now >= lastTime + 1000) {
+                fps = frames;
+                frames = 0;
+                lastTime = now;
+                document.getElementById('fps').textContent = fps;
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // INICIA: Iniciar o loop
+        animate();
+    </script>
+</body>
+</html>
