@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Domínios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .btn-generate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-generate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-download {
+            background: #10b981;
+            color: white;
+            display: none;
+        }
+
+        .btn-download:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .domain-list {
+            list-style: none;
+        }
+
+        .domain-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 Gerador de Domínios</h1>
+        
+        <div class="input-group">
+            <label for="keyword">Palavra-chave:</label>
+            <input type="text" id="keyword" placeholder="Ex: tech, blog, shop">
+        </div>
+
+        <div class="input-group">
+            <label for="extension">Extensão:</label>
+            <select id="extension">
+                <option value=".com">.com</option>
+                <option value=".com.br">.com.br</option>
+                <option value=".net">.net</option>
+                <option value=".org">.org</option>
+                <option value=".io">.io</option>
+                <option value=".dev">.dev</option>
+                <option value=".app">.app</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label for="quantity">Quantidade:</label>
+            <input type="number" id="quantity" value="10" min="1" max="50">
+        </div>
+
+        <button class="btn btn-generate" onclick="generateDomains()">Gerar Domínios</button>
+        <button class="btn btn-download" id="downloadBtn" onclick="downloadRSS()">📥 Download RSS</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Gerando domínios...</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3 style="margin-bottom: 15px; color: #667eea;">Domínios Gerados:</h3>
+            <ul class="domain-list" id="domainList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let generatedDomains = [];
+
+        const prefixes = ['get', 'my', 'the', 'go', 'pro', 'best', 'top', 'super', 'mega', 'ultra'];
+        const suffixes = ['hub', 'zone', 'spot', 'site', 'web', 'online', 'digital', 'express', 'direct', 'plus'];
+
+        function generateDomains() {
+            const keyword = document.getElementById('keyword').value.trim();
+            const extension = document.getElementById('extension').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+
+            if (!keyword) {
+                alert('Por favor, insira uma palavra-chave!');
+                return;
+            }
+
+            // Mostrar loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('downloadBtn').style.display = 'none';
+
+            setTimeout(() => {
+                generatedDomains = [];
+                const domainList = document.getElementById('domainList');
+                domainList.innerHTML = '';
+
+                // Gerar domínios
+                for (let i = 0; i < quantity; i++) {
+                    let domain;
+                    const random = Math.random();
+
+                    if (random < 0.33) {
+                        // Prefixo + palavra-chave
+                        const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                        domain = prefix + keyword + extension;
+                    } else if (random < 0.66) {
+                        // Palavra-chave + sufixo
+                        const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+                        domain = keyword + suffix + extension;
+                    } else {
+                        // Palavra-chave + número
+                        const num = Math.floor(Math.random() * 999) + 1;
+                        domain = keyword + num + extension;
+                    }
+
+                    generatedDomains.push(domain);
+
+                    const li = document.createElement('li');
+                    li.className = 'domain-item';
+                    li.textContent = domain;
+                    domainList.appendChild(li);
+                }
+
+                // Esconder loading e mostrar resultado
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('downloadBtn').style.display = 'block';
+            }, 800);
+        }
+
+        function downloadRSS() {
+            const keyword = document.getElementById('keyword').value.trim();
+            const now = new Date().toISOString();
+
+            let rssContent = `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <title>Domínios Gerados - ${keyword}</title>
+        <link>https://example.com</link>
+        <description>Lista de domínios gerados com a palavra-chave "${keyword}"</description>
+        <language>pt-BR</language>
+        <pubDate>${now}</pubDate>
+`;
+
+            generatedDomains.forEach((domain, index) => {
+                rssContent += `
+        <item>
+            <title>${domain}</title>
+            <link>http://${domain}</link>
+            <description>Domínio sugerido #${index + 1}: ${domain}</description>
+            <pubDate>${now}</pubDate>
+            <guid>domain-${index + 1}-${Date.now()}</guid>
+        </item>`;
+            });
+
+            rssContent += `
+    </channel>
+</rss>`;
+
+            // Criar e fazer download do arquivo
+            const blob = new Blob([rssContent], { type: 'application/rss+xml' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dominios-${keyword}-${Date.now()}.rss`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        // Permitir gerar com Enter
+        document.getElementById('keyword').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') generateDomains();
+        });
+    </script>
+</body>
+</html>
