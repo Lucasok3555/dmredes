@@ -1,6 +1,6 @@
 // Criar um iframe escondido para o hub central
 const iframe = document.createElement('iframe');
-iframe.src = "https://meu-sso.com/bridge.html";
+iframe.src = "";
 iframe.style.display = "none";
 document.body.appendChild(iframe);
 
